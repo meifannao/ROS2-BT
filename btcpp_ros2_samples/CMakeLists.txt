@@ -10,11 +10,13 @@ find_package(behaviortree_ros2 REQUIRED)
 find_package(btcpp_ros2_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(psdk_interfaces REQUIRED)
 
 set(THIS_PACKAGE_DEPS
     behaviortree_ros2
     std_msgs
     std_srvs
+    psdk_interfaces
     btcpp_ros2_interfaces )
 
 ######################################################
@@ -30,6 +32,15 @@ add_executable(sleep_client
   src/sleep_client.cpp)
 ament_target_dependencies(sleep_client ${THIS_PACKAGE_DEPS})
 
+add_executable(photo_client
+  src/photo_action.cpp
+  src/photo_client.cpp)
+ament_target_dependencies(photo_client ${THIS_PACKAGE_DEPS})
+
+
+add_executable(camera_client_node src/camera_client.cpp)
+ament_target_dependencies(camera_client_node ${THIS_PACKAGE_DEPS})
+
 ######################################################
 # Build a client that call the sleep action (Plugin version)
 
@@ -42,10 +53,21 @@ target_compile_definitions(sleep_client_dyn PRIVATE USE_SLEEP_PLUGIN )
 target_link_libraries(sleep_client_dyn sleep_plugin )
 ament_target_dependencies(sleep_client_dyn ${THIS_PACKAGE_DEPS})
 
+add_library(photo_plugin SHARED src/photo_action.cpp)
+target_compile_definitions(photo_plugin PRIVATE  BT_PLUGIN_EXPORT )
+ament_target_dependencies(photo_plugin ${THIS_PACKAGE_DEPS})
+
+add_executable(photo_client_dyn src/photo_client.cpp)
+target_compile_definitions(photo_client_dyn PRIVATE USE_PHOTO_PLUGIN )
+target_link_libraries(photo_client_dyn photo_plugin )
+ament_target_dependencies(photo_client_dyn ${THIS_PACKAGE_DEPS})
 ######################################################
 # Build Server
 add_executable(sleep_server src/sleep_server.cpp)
 ament_target_dependencies(sleep_server ${THIS_PACKAGE_DEPS})
+
+add_executable(photo_server src/photo_server.cpp)
+ament_target_dependencies(photo_server ${THIS_PACKAGE_DEPS})
 
 ######################################################
 # Build subscriber_test
@@ -68,6 +90,11 @@ install(TARGETS
   sleep_client_dyn
   sleep_server
   sleep_plugin
+  photo_client
+  photo_client_dyn
+  photo_server
+  photo_plugin
+  camera_client_node
   subscriber_test
   sample_bt_executor
   bool_client
@@ -80,6 +107,7 @@ install(TARGETS
 
 install(TARGETS
   sleep_plugin
+  photo_plugin
   LIBRARY DESTINATION share/${PROJECT_NAME}/bt_plugins
   ARCHIVE DESTINATION share/${PROJECT_NAME}/bt_plugins
   RUNTIME DESTINATION share/${PROJECT_NAME}/bt_plugins
@@ -96,6 +124,6 @@ install(DIRECTORY
     )
 
 
-ament_export_dependencies(behaviortree_ros2 btcpp_ros2_interfaces)
+ament_export_dependencies(behaviortree_ros2 btcpp_ros2_interfaces psdk_interfaces)
 
 ament_package()
